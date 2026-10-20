@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">ЦОД: Последний рубеж</title>
+  <desc id="desc">Тактическая оборона дата-центра. Десять волн, пять типов боссов и инфраструктура под вашим управлением.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101e28"/><stop offset="1" stop-color="#203d36"/></linearGradient>
+    <linearGradient id="rack" x2="0" y2="1"><stop stop-color="#61c9e0"/><stop offset="1" stop-color="#31617a"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#7dbd83" stop-opacity=".17"/><stop offset="1" stop-color="#7dbd83" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="48" height="24" patternUnits="userSpaceOnUse"><path d="M0 12 24 0 48 12 24 24Z" fill="none" stroke="#9abca4" stroke-opacity=".09"/></pattern>
+  </defs>
+  <rect width="1200" height="360" rx="20" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="20" fill="url(#grid)"/>
+  <ellipse cx="940" cy="155" rx="330" ry="260" fill="url(#glow)"/>
+  <path d="M48 46H92M48 46V70M1152 46H1108M1152 46V70M48 314H92M48 314V290M1152 314H1108M1152 314V290" fill="none" stroke="#accc83" stroke-width="2" opacity=".7"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <circle cx="78" cy="82" r="5" fill="#bfde8f"/>
+    <text x="94" y="87" fill="#bfd69e" font-size="13" letter-spacing="3">ИНФРАСТРУКТУРА ПОД ЗАЩИТОЙ</text>
+    <text x="72" y="157" fill="#f0f4e9" font-size="57" font-weight="800">ЦОД</text>
+    <text x="72" y="211" fill="#f0f4e9" font-size="42" font-weight="700" letter-spacing="1">ПОСЛЕДНИЙ РУБЕЖ</text>
+    <text x="75" y="247" fill="#a6bbaf" font-size="17">Построй. Обеспечь. Защити.</text>
+    <rect x="74" y="273" width="112" height="28" rx="6" fill="#bfd69e" fill-opacity=".12" stroke="#bfd69e" stroke-opacity=".35"/>
+    <text x="130" y="292" fill="#d4e6b4" text-anchor="middle" font-size="12" font-weight="700">10 ВОЛН</text>
+    <text x="206" y="292" fill="#a6bbaf" font-size="12" letter-spacing="2">BROWSER DEFENSE / STRATEGY</text>
+  </g>
+  <g transform="translate(862 151)">
+    <ellipse cx="55" cy="107" rx="163" ry="72" fill="none" stroke="#bbd98c" stroke-dasharray="5 8" opacity=".35"/>
+    <path d="M-104 84 50 7 203 84 50 161Z" fill="#496257" stroke="#80977b"/>
+    <path d="M-104 84 50 161 203 84V95L50 173-104 95Z" fill="#293f3a"/>
+    <path d="M-39-23 44-65 126-23 44 18Z" fill="#9bb3b0"/>
+    <path d="M-39-23 44 18V122L-39 80Z" fill="#456876"/>
+    <path d="M44 18 126-23V80L44 122Z" fill="#274b62"/>
+    <g fill="url(#rack)" stroke="#8bdded" stroke-width="1">
+      <path d="M-26-4-8 5V74L-26 65Z"/><path d="M3 11 21 20V89L3 80Z"/>
+      <path d="M59 24 78 14V83L59 93Z"/><path d="M91 8 111-2V67L91 77Z"/>
+    </g>
+    <g stroke="#c1f0ef" stroke-width="2" opacity=".6"><path d="M-24 12-10 19M-24 29-10 36M-24 46-10 53M5 27 19 34M5 44 19 51M5 61 19 68M62 38 75 31M62 56 75 49M94 23 108 16M94 41 108 34"/></g>
+    <ellipse cx="44" cy="-25" rx="27" ry="13" fill="#34515d" stroke="#d0dcd1" stroke-width="4"/>
+    <path d="M25-25H63M44-35V-15" stroke="#8dacae" stroke-width="3"/>
+    <path d="M100-28V-76" stroke="#afbcad" stroke-width="3"/><circle cx="100" cy="-78" r="4" fill="#f1a582"/>
+    <g transform="translate(-70 78)"><path d="M-20 0 0-10 20 0V17L0 27-20 17Z" fill="#a4ad7b" stroke="#d1d6a6"/><path d="M-5 1 13-32M5 7 23-26" stroke="#cad5b5" stroke-width="7"/></g>
+    <path d="M-46 40-18-69" fill="none" stroke="#edc486" stroke-width="2" stroke-dasharray="4 7"/>
+    <g transform="translate(-12 -90)" fill="none" stroke="#e4af8d" stroke-width="2"><path d="M-14-7 14 7M-14 7 14-7"/><ellipse cx="-14" cy="-7" rx="9" ry="4"/><ellipse cx="14" cy="7" rx="9" ry="4"/><ellipse cx="-14" cy="7" rx="9" ry="4"/><ellipse cx="14" cy="-7" rx="9" ry="4"/><circle r="4" fill="#e4af8d"/></g>
+  </g>
+</svg>
