@@ -4,7 +4,7 @@ import {buildable,location} from './maps';
 import {PIG_COLUMNS,PIG_PIVOTS,PIG_ROWS,SERVER_FRAMES,ORBITAL_FRAME,ORBITAL_ROCKET_FRAME} from './art';
 import Phaser from 'phaser';
 import {SATELLITE_FLIGHT,AMMO_CAPACITY,ammoCapacity,UPGRADE_SECONDS,operational,defenseRange,buildingAlerts,supplyRoute,waveIntel,SIZE,TYPES,build,maxHp,metrics,occupied,type Building,type State} from './model';
-import {session,step,save,notify} from './session';
+import {session,step,save,notify,togglePause} from './session';
 const TW=38, TH=19;
 const iso=(x:number,y:number)=>({x:(x-y)*TW,y:(x+y)*TH});
 export class World extends Phaser.Scene {
@@ -32,10 +32,10 @@ export class World extends Phaser.Scene {
    if(p.isDown&&Math.hypot(p.x-this.down.x,p.y-this.down.y)>7){this.dragged=true;this.cameras.main.scrollX=this.down.sx-(p.x-this.down.x)/this.cameras.main.zoom;this.cameras.main.scrollY=this.down.sy-(p.y-this.down.y)/this.cameras.main.zoom;}
    const world=this.cameras.main.getWorldPoint(p.x,p.y);this.hover={x:Math.floor((world.x/TW+world.y/TH)/2),y:Math.floor((world.y/TH-world.x/TW)/2)};
   });
-  this.input.on('pointerup',(p:Phaser.Input.Pointer)=>{if(this.pinch){this.pinch=0;return;}if(this.dragged)return;const v=this.cameras.main.getWorldPoint(p.x,p.y);const x=Math.floor((v.x/TW+v.y/TH)/2),y=Math.floor((v.y/TH-v.x/TW)/2);if(session.placing){if(build(session.state,session.placing,x,y)){session.selected=occupied(session.state,x,y)!.id;save();notify('Здание построено');}else notify('Нужна доступная свободная клетка и достаточный бюджет');}else{const truck=session.state.trucks?.find(t=>{const p=iso(t.x+.5,t.y+.5);return Math.hypot(p.x-v.x,p.y-6-v.y)<18;});session.selected=truck?.depot??occupied(session.state,x,y)?.id??0;}});
+  this.input.on('pointerup',(p:Phaser.Input.Pointer)=>{if(this.pinch){this.pinch=0;return;}if(this.dragged)return;const v=this.cameras.main.getWorldPoint(p.x,p.y);const x=Math.floor((v.x/TW+v.y/TH)/2),y=Math.floor((v.y/TH-v.x/TW)/2);if(session.placing){if(build(session.state,session.placing,x,y)){session.selected=occupied(session.state,x,y)!.id;session.placing=null;save();notify('Здание построено');}else notify('Нужна доступная свободная клетка и достаточный бюджет');}else{const truck=session.state.trucks?.find(t=>{const p=iso(t.x+.5,t.y+.5);return Math.hypot(p.x-v.x,p.y-6-v.y)<18;});session.selected=truck?.depot??occupied(session.state,x,y)?.id??0;}});
   this.input.on('wheel',(_p:unknown,_o:unknown,_dx:number,dy:number)=>this.zoom(dy>0?.9:1.1));
   this.input.keyboard?.on('keydown-ESC',()=>{session.placing=null;session.selected=0;});
-  this.input.keyboard?.on('keydown-SPACE',(e:KeyboardEvent)=>{if(session.state.phase==='attack'||session.modalOpen||(e.target as HTMLElement)?.tagName==='BUTTON')return;e.preventDefault();session.paused=!session.paused;});
+  this.input.keyboard?.on('keydown-SPACE',(e:KeyboardEvent)=>{if(e.repeat||session.modalOpen||['BUTTON','INPUT','SELECT','TEXTAREA'].includes((e.target as HTMLElement)?.tagName)||(e.target as HTMLElement)?.isContentEditable)return;e.preventDefault();togglePause();});
  }
  fit(){const cam=this.cameras.main;cam.setZoom(Math.min(this.scale.width/1050,this.scale.height/700)*this.userZoom);cam.centerOn(0,210);}
  zoom(f:number){this.userZoom=Phaser.Math.Clamp(this.userZoom*f,.65,2.8);const cam=this.cameras.main;cam.setZoom(Math.min(this.scale.width/1050,this.scale.height/700)*this.userZoom);}

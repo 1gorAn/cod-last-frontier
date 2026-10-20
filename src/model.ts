@@ -99,7 +99,7 @@ export function buildingAlerts(s:State,b:Building,m=metrics(s)){
  const alerts:{code:string;message:string}[]=[];if(b.upgradeLeft){alerts.push({code:'↑',message:`Улучшение: ${Math.ceil(b.upgradeLeft)} с`});return alerts;}
  if(b.kind==='defense'&&(b.ammo??ammoCapacity(s))===0)alerts.push({code:'БК 0',message:'Нет боеприпасов — ПВО не стреляет'});
  if(TYPES[b.kind].power>0&&m.supply<.99)alerts.push({code:'ТОК',message:m.supply<=.1?'Нет питания':'Недостаточно энергии'});
- if(b.kind==='server'&&m.cooling<m.heat)alerts.push({code:'ЖАР',message:'Перегрев: сервер теряет прочность'});
+ if(b.kind==='server'&&m.cooling<m.heat)alerts.push({code:'ЖАР',message:s.phase==='build'?'Недостаточно охлаждения: после старта сервер будет перегреваться':'Перегрев: сервер теряет прочность'});
  if(b.kind==='defense'){const interference=defenseModifiers(s,b);if(interference.range<1)alerts.push({code:'РЭБ',message:'Помехи босса: дальность −30%'});if(interference.reload<1)alerts.push({code:'ИМП',message:'Импульс босса: скорость перезарядки −35%'});}
  if(b.kind==='defense'&&b.resupplyRequested)alerts.push({code:'БК →',message:(s.trucks??[]).some(t=>t.stops.includes(b.id))?'Пополнение в пути':'Заявка на пополнение в очереди'});
  return alerts;
@@ -211,23 +211,23 @@ export function emergencyIntercept(s:State){
  log(s,'Вызван аварийный перехват за 300 ₽. Повторный вызов доступен в следующей волне.');return true;
 }
 function damageBuilding(s:State,b:Building,amount:number,cause:string){
- b.hp-=amount;
+ b.hp-=amount*((s.sector??1)===1&&cause!=='прямое попадание спутника'? .85:1);
  const gun=s.buildings.filter(a=>a.kind==='defense'&&a.hp>0).sort((a,c)=>Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(c.x-b.x,c.y-b.y))[0];
  const status=!gun?'ПВО на площадке отсутствовало.':gun.upgradeLeft?'Ближайшее ПВО было на улучшении.':(gun.ammo??AMMO_CAPACITY)===0?'Ближайшее ПВО было без боеприпасов.':metrics(s).supply<=.1?'ПВО было без питания.':'Проверьте дальность и приоритеты ПВО.';
  b.lastDamage=`${TYPES[b.kind].name} №${b.id}: ${cause}. ${status}`;
 }
 export function tick(s:State,dt:number,random:()=>number=Math.random){
- if(s.phase==='lost'||s.phase==='won'||s.starlink==='pending')return;if(s.phase==='build'&&s.wave>0&&s.wave<10)beginWave(s,s.bonus);s.elapsed+=dt;updateUpgrades(s,dt);const m=metrics(s);const earned=Math.min(m.income*dt,m.incomeRemaining);s.money+=earned;if(s.phase==='attack')s.waveEarnings=Math.min(m.incomeLimit,(s.waveEarnings??0)+earned);s.reputation=Math.max(0,Math.min(100,s.reputation+(m.efficiency>.85?.15:-1.5)*dt));
+ if(s.phase==='lost'||s.phase==='won'||s.starlink==='pending')return;if(s.phase==='build'&&s.wave>0&&s.wave<10)beginWave(s,s.bonus);s.elapsed+=dt;updateUpgrades(s,dt);const m=metrics(s);const earned=Math.min(m.income*dt,m.incomeRemaining);s.money+=earned;if(s.phase==='attack')s.waveEarnings=Math.min(m.incomeLimit,(s.waveEarnings??0)+earned);if(s.phase==='attack')s.reputation=Math.max(0,Math.min(100,s.reputation+(m.efficiency>.85?.15:(s.sector??1)===1?-.75:-1.5)*dt));
  for(const e of s.effects)e.life-=dt;s.effects=s.effects.filter(e=>e.life>0);
  for(const b of s.buildings){
   if(!operational(b))continue;
-  if(b.kind==='server'&&m.cooling<m.heat)damageBuilding(s,b,dt*3*(1-m.cooling/Math.max(1,m.heat)),'перегрев из-за недостатка охлаждения');
+  if(s.phase==='attack'&&b.kind==='server'&&m.cooling<m.heat)damageBuilding(s,b,dt*3*(1-m.cooling/Math.max(1,m.heat)),'перегрев из-за недостатка охлаждения');
   if((b.kind==='repair'||s.tech.automation>0)&&m.supply>.2){const target=s.buildings.find(a=>a.hp<maxHp(a)-.1);if(target&&s.parts>0){const rate=b.kind==='repair'?4*b.level:2*s.tech.automation/s.buildings.length;const amount=Math.min(maxHp(target)-target.hp,rate*dt*m.supply,s.parts*8/repairPrice(s));target.hp+=amount;s.parts-=amount/8*repairPrice(s);}}
   if(b.kind==='orbital')b.cooldown=Math.max(0,b.cooldown-dt);
   if(b.kind==='defense'){b.cooldown-=dt*defenseModifiers(s,b).reload;const range=defenseRange(s,b);const target=s.enemies.filter(e=>e.hp>0&&!e.retreat&&Math.hypot(e.x-b.x,e.y-b.y)<range).sort((a,c)=>{const rank=(e:Enemy)=>b.priority==='missile'?(e.kind==='missile'?0:1):b.priority==='heavy'?(['heavy','boss','barrel','pig'].includes(e.kind)?0:1):0;return rank(a)-rank(c)||Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(c.x-b.x,c.y-b.y);})[0];if(target&&b.cooldown<=0&&m.supply>.1&&(b.ammo??AMMO_CAPACITY)>0){b.ammo=(b.ammo??AMMO_CAPACITY)-1;const damage=23*b.level*(1+s.tech.security*.25)*(s.bonus==='shield'?1.35:1);hitEnemy(s,target,damage*(b.specialization==='flak'?.7:b.specialization==='rocket'?(['heavy','boss','barrel','pig'].includes(target.kind)?2.2:1.3):1),b);if(b.specialization==='flak')for(const other of s.enemies)if(other.id!==target.id&&other.hp>0&&!other.retreat&&Math.hypot(other.x-target.x,other.y-target.y)<=1.3)hitEnemy(s,other,damage*.45,b);b.cooldown=(b.specialization==='rocket'?1.5:.85)/Math.max(.15,m.supply);s.effects.push({x:b.x,y:b.y,tx:target.x,ty:target.y,kind:'shot',life:.18});}}
  }
  if(s.phase==='attack'){
-  s.spawnIn-=dt;if(!s.satellite&&s.remaining>0&&s.spawnIn<=0){const groupSize=s.wave>=7?4:s.wave>=4?3:2;for(let i=0;i<groupSize&&s.remaining>0;i++)spawn(s,random);s.spawnIn=Math.max(1.8,2.8-s.wave*.1);}
+  s.spawnIn-=dt;if(!s.satellite&&s.remaining>0&&s.spawnIn<=0){const groupSize=s.wave>=7?4:s.wave>=4?3:2;for(let i=0;i<groupSize&&s.remaining>0;i++)spawn(s,random);s.spawnIn=Math.max(1.8,2.8-s.wave*.1)*((s.sector??1)===1?1.2:1);}
   if(s.wave===3&&!s.starlink&&s.remaining<=Math.floor((10+s.wave*5)/2)){s.starlink='pending';return;}
   for(const e of s.enemies){if(e.retreat){e.x+=e.retreat.x*3*dt;e.y+=e.retreat.y*3*dt;if(e.x< -4||e.x>SIZE+4||e.y< -4||e.y>SIZE+4)e.hp=0;continue;}if(e.hp<=0){s.kills++;s.money+=e.summoned?0:e.kind==='barrel'?60:4;s.effects.push({x:e.x,y:e.y,tx:e.x,ty:e.y,life:.55,kind:'blast'});continue;}
    if(e.kind==='pig'){updatePig(s,e,dt);continue;}
@@ -288,7 +288,7 @@ export function tick(s:State,dt:number,random:()=>number=Math.random){
   }
  }
  updateSupply(s,dt);
- if(s.phase==='attack'&&!s.satellite&&(s.satelliteRemaining??0)===0&&s.remaining===0&&s.enemies.length===0){s.money+=180+s.wave*35;s.parts+=30;s.science+=2;log(s,`Волна ${s.wave} отражена. +${180+s.wave*35} ₽, +30 запчастей, +2 очка науки.`);if(s.wave===10){s.phase='won';s.event='Все десять волн отражены. Периметр чист.';}else{beginWave(s,s.bonus);s.spawnIn=0;}}
+ if(s.phase==='attack'&&!s.satellite&&(s.satelliteRemaining??0)===0&&s.remaining===0&&s.enemies.length===0){s.money+=180+s.wave*35;s.parts+=30;s.science+=2;log(s,`Волна ${s.wave} отражена. +${180+s.wave*35} ₽, +30 запчастей, +2 очка науки.`);if(s.wave===10){s.phase='won';s.event='Все десять волн отражены. Периметр чист.';}else{beginWave(s,s.bonus);s.spawnIn=(s.sector??1)===1?6:0;}}
 }
 export const SAVE_KEY='data-fortress-v1';
 export function encode(s:State){return JSON.stringify({...s,effects:[]});}
